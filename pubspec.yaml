@@ -14,6 +14,7 @@ dependencies:
 
   flutter_bloc: ^7.0.1
   equatable: ^2.0.2
+  bloc_test: ^8.0.2
 
   krpc_dart:
     path: ../krpc-dart

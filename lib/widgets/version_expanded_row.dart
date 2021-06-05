@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:krpc_dart/krpc_dart.dart';
-import '../application/connection_bloc.dart';
+import '../application/connection/connection_bloc.dart';
 
 class VersionExpandedRow extends StatelessWidget {
 
