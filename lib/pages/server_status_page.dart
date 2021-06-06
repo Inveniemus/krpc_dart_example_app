@@ -5,15 +5,6 @@ import '../application/connection/connection_bloc.dart';
 import '../application/connection_parameters/connection_parameters_bloc.dart';
 
 class ServerStatusPage extends StatelessWidget {
-  void _connect(BuildContext context) {
-    BlocProvider.of<ConnectionBloc>(context)
-        .add(RequestConnectionEvent(ipAddress: '192.168.0.150'));
-  }
-
-  void _disconnect(BuildContext context) {
-    BlocProvider.of<ConnectionBloc>(context).add(RequestDisconnectionEvent());
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,33 +14,6 @@ class ServerStatusPage extends StatelessWidget {
       body: Center(
         child: BlocBuilder<ConnectionBloc, KrpcConnectionState>(
           builder: (context, state) {
-            String stateText = 'Disconnected';
-            String buttonText = 'Connect?';
-            VoidCallback onPress = () => _connect(context);
-            Color buttonColor = Colors.green;
-
-            if (state is ConnectionErrorState) {
-              stateText = state.message;
-              buttonText = 'Try again?';
-              buttonColor = Colors.amber;
-              onPress = () => _connect(context);
-            } else if (state is ConnectingState) {
-              stateText = 'Connecting...';
-              buttonText = 'Please wait...';
-              buttonColor = Colors.grey;
-              onPress = () => null;
-            } else if (state is DisconnectedState) {
-              stateText = 'Disconnected';
-              buttonText = 'Connect?';
-              buttonColor = Colors.green;
-              onPress = () => _connect(context);
-            } else if (state is ConnectedState) {
-              stateText = 'Connected!';
-              buttonText = 'Disconnect?';
-              buttonColor = Colors.green;
-              onPress = () => _disconnect(context);
-            }
-
             return Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -63,25 +27,8 @@ class ServerStatusPage extends StatelessWidget {
                   RpcPortTextField(),
                   StreamPortTextField(),
                   ClientNameTextField(),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: OutlinedButton(
-                        onPressed: onPress,
-                        style: ButtonStyle(
-                            backgroundColor:
-                                MaterialStateProperty.all<Color>(buttonColor)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            buttonText,
-                            style: Theme.of(context).textTheme.headline6,
-                          ),
-                        )),
-                  ),
-                  Text(
-                    'Status: $stateText',
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
+                  ConnectionButton(),
+                  ConnectionStatusText(),
                   VersionExpandedRow(),
                 ],
               ),
@@ -155,8 +102,7 @@ class RpcPortTextField extends _DecoratedTextField {
 
   @override
   void _onChanged(String value, BuildContext context) {
-    BlocProvider.of<ConnectionParametersBloc>(context)
-        .add(RpcPortEvent(value));
+    BlocProvider.of<ConnectionParametersBloc>(context).add(RpcPortEvent(value));
   }
 }
 
@@ -191,5 +137,95 @@ class ClientNameTextField extends _DecoratedTextField {
   void _onChanged(String value, BuildContext context) {
     BlocProvider.of<ConnectionParametersBloc>(context)
         .add(ClientNameEvent(value));
+  }
+}
+
+class ConnectionButton extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ConnectionParametersBloc, ConnectionParametersState>(
+  builder: (context, connectionParametersState) {
+
+    RequestConnectionEvent? requestEvent;
+
+    if (connectionParametersState is ConnectionParametersOK) {
+      requestEvent = RequestConnectionEvent(
+        ipAddress: connectionParametersState.parameters.ipAddress,
+        rpcPort: connectionParametersState.parameters.rpcPort,
+        streamPort: connectionParametersState.parameters.streamPort,
+        clientName: connectionParametersState.parameters.clientName,
+      );
+    } else {
+      requestEvent = null;
+    }
+
+    return BlocBuilder<ConnectionBloc, KrpcConnectionState>(
+      builder: (context, state) {
+        String buttonText = 'Connect?';
+        VoidCallback onPress = () =>
+            requestEvent != null ? context.read<ConnectionBloc>().add(requestEvent) : null;
+        Color buttonColor = Colors.green;
+
+        if (state is ConnectionErrorState) {
+          buttonText = 'Try again?';
+          buttonColor = Colors.amber;
+        } else if (state is ConnectingState) {
+          buttonText = 'Please wait...';
+          buttonColor = Colors.grey;
+        } else if (state is DisconnectedState) {
+          buttonText = 'Connect?';
+          buttonColor = Colors.green;
+        } else if (state is ConnectedState) {
+          buttonText = 'Disconnect?';
+          buttonColor = Colors.green;
+          onPress = () => context.read<ConnectionBloc>().add(RequestDisconnectionEvent());
+        }
+
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: OutlinedButton(
+              onPressed: onPress,
+              style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(buttonColor)),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  buttonText,
+                  style: Theme.of(context).textTheme.headline6,
+                ),
+              )),
+        );
+      },
+    );
+  },
+);
+  }
+}
+
+class ConnectionStatusText extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ConnectionBloc, KrpcConnectionState>(
+      builder: (context, state) {
+        String stateText = 'Disconnected';
+
+        if (state is ConnectionErrorState) {
+          stateText = state.message;
+        } else if (state is ConnectingState) {
+          stateText = 'Connecting...';
+        } else if (state is DisconnectedState) {
+          stateText = 'Disconnected';
+        } else if (state is ConnectedState) {
+          stateText = 'Connected!';
+        }
+
+        return Text(
+          'Status: $stateText',
+          style: Theme.of(context).textTheme.headline6,
+        );
+      },
+    );
   }
 }

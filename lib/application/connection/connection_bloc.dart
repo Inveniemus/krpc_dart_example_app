@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:krpc_dart/krpc_dart.dart';
 
 part 'connection_event.dart';
+
 part 'connection_state.dart';
 
 class ConnectionBloc extends Bloc<ConnectionEvent, KrpcConnectionState> {
@@ -25,6 +26,10 @@ class ConnectionBloc extends Bloc<ConnectionEvent, KrpcConnectionState> {
         streamPort: event.streamPort,
         clientName: event.clientName,
       );
+
+      print(
+          'Requesting connection with parameters:\n${event.ipAddress} - '
+          '${event.rpcPort} - ${event.streamPort} - ${event.clientName}');
 
       try {
         await client.connectRPC();

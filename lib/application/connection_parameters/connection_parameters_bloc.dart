@@ -46,6 +46,11 @@ class KrpcConnectionParameters {
   }
 
   bool get valid => ipValid && rpcValid && streamValid && clientNameValid;
+
+  @override
+  String toString() {
+    return '$ipAddress - $rpcPort - $streamPort - $clientName';
+  }
 }
 
 class ConnectionParametersBloc
@@ -74,6 +79,7 @@ class ConnectionParametersBloc
 
   ConnectionParametersState _getState() {
     if (_parameters.valid) {
+      //print(_parameters);
       return ConnectionParametersOK(_parameters);
     } else {
       return ConnectionParametersError(
