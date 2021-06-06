@@ -45,6 +45,12 @@ class ConnectionBloc extends Bloc<ConnectionEvent, KrpcConnectionState> {
         client = KrpcClient(); // reset the client
       }
       yield DisconnectedState();
+    } else if (event is GetConnectionStatus) {
+      if (client.status == KrpcClientStatus.connected) {
+        yield ConnectedState(client);
+      } else {
+        yield DisconnectedState();
+      }
     }
   }
 }
